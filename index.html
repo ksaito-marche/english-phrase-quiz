@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英会話フレーズクイズ</title>
+<style>
+  /* 1カラムのカード型クイズ。青系のニュートラルにアクセント1色 */
+  :root {
+    --bg: #f3f5f9; --card: #ffffff; --text: #1c2230; --muted: #646d7e;
+    --accent: #2f6fde; --ok: #1a8a4a; --ng: #c93a3a; --border: #dfe3eb; --rec: #d9363e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #14171d; --card: #1d2129; --text: #e7e9ee; --muted: #9aa1ad;
+      --accent: #6b9cf5; --ok: #4cc27f; --ng: #f07070; --border: #313744; --rec: #f06a70; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: #14171d; --card: #1d2129; --text: #e7e9ee; --muted: #9aa1ad;
+    --accent: #6b9cf5; --ok: #4cc27f; --ng: #f07070; --border: #313744; --rec: #f06a70; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, "Hiragino Sans", "Yu Gothic UI", sans-serif; line-height: 1.6; }
+  main { max-width: 640px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: .9rem; margin: 0 0 24px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+  .progress { display: flex; justify-content: space-between; color: var(--muted); font-size: .9rem; margin-bottom: 12px; }
+  .bar { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
+  .bar > div { height: 100%; background: var(--accent); transition: width .3s; }
+  .ja { font-size: 1.35rem; font-weight: 600; margin: 8px 0 20px; }
+  input[type=text] { width: 100%; font-size: 1.1rem; padding: 12px 14px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+  input[type=text]:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  button { font: inherit; padding: 10px 18px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  .result { margin-top: 18px; padding: 14px; border-radius: 10px; display: none; }
+  .result.ok { display: block; background: color-mix(in srgb, var(--ok) 12%, transparent); }
+  .result.ng { display: block; background: color-mix(in srgb, var(--ng) 12%, transparent); }
+  .result .head { font-weight: 700; }
+  .result.ok .head { color: var(--ok); } .result.ng .head { color: var(--ng); }
+  .answer { font-size: 1.1rem; font-weight: 600; }
+  .alt { color: var(--muted); font-size: .9rem; }
+  .speak { border: none; background: none; padding: 0 4px; font-size: 1.1rem; }
+  ul.review { list-style: none; padding: 0; margin: 16px 0 0; }
+  ul.review li { padding: 10px 0; border-top: 1px solid var(--border); }
+  .mark { font-weight: 700; margin-right: 6px; }
+  .mark.ok { color: var(--ok); } .mark.ng { color: var(--ng); }
+  .score { font-size: 2rem; font-weight: 700; margin: 4px 0 0; }
+  .hidden { display: none; }
+  .hint { color: var(--muted); font-size: .85rem; margin-top: 10px; }
+  .inputRow { display: flex; gap: 8px; }
+  .inputRow input { flex: 1; min-width: 0; }
+  button.mic { width: 52px; flex: none; padding: 0; font-size: 1.3rem; }
+  button.mic.on { background: var(--rec); border-color: var(--rec); color: #fff; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .7; } }
+  @media (prefers-reduced-motion: reduce) { button.mic.on { animation: none; } }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .micMsg { color: var(--muted); font-size: .85rem; margin-top: 8px; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>英会話フレーズクイズ</h1>
+  <p class="sub">「初心者がまず覚えるべき英会話フレーズ100選」からランダムに10問。日本語を英語にしてください。</p>
+
+  <section id="start" class="card">
+    <p>全100フレーズの中から10問が出題されます。答えを入力して Enter で判定、もう一度 Enter で次の問題へ進みます。</p>
+    <p class="hint">大文字・小文字、記号、短縮形（I'm / I am など）の違いは気にしなくて大丈夫です。表現が違っても合っていると思ったら「正解にする」を押してください。</p>
+    <p class="hint">🎤ボタンで英語を話して答えられます。ボタンが使えない場合は、キーボードの音声入力を使ってください（Windows は <b>Win + H</b>、Mac は <b>Fn を2回</b>、スマホはキーボードのマイク）。</p>
+    <div class="row"><button class="primary" id="startBtn">スタート</button></div>
+  </section>
+
+  <section id="quiz" class="card hidden">
+    <div class="progress"><span id="qnum"></span><span id="qscore"></span></div>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="ja" id="ja"></div>
+    <div class="inputRow">
+      <input type="text" id="input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="英語で入力 / 🎤で話す">
+      <button class="mic" id="micBtn" title="音声で答える" aria-label="音声で答える">🎤</button>
+    </div>
+    <div class="micMsg" id="micMsg"></div>
+    <div class="row">
+      <button class="primary" id="checkBtn">答え合わせ</button>
+      <button id="skipBtn">わからない</button>
+    </div>
+    <div class="result" id="result">
+      <div class="head" id="resultHead"></div>
+      <div class="answer"><span id="answer"></span><button class="speak" id="speakBtn" title="発音を聞く">🔊</button></div>
+      <div class="alt" id="alt"></div>
+      <div class="row">
+        <button class="primary" id="nextBtn">次へ</button>
+        <button id="overrideBtn">正解にする</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="end" class="card hidden">
+    <div>結果</div>
+    <div class="score" id="finalScore"></div>
+    <ul class="review" id="review"></ul>
+    <div class="row">
+      <button class="primary" id="againBtn">もう一度（新しい10問）</button>
+      <button id="retryWrongBtn">間違えた問題だけ</button>
+    </div>
+  </section>
+</main>
+
+<script>
+// [日本語, 正解(先頭が模範解答), ...別解]
+const PHRASES = [
+  ["元気？", "How are you?", "How are you doing?", "What's up?"],
+  ["元気だよ、ありがとう。", "I'm good, thank you.", "I'm good, thanks."],
+  ["あなたは？", "How about you?", "What about you?"],
+  ["名前は何ですか？", "What's your name?"],
+  ["私の名前はケンです。", "My name is Ken."],
+  ["ケンです。（名乗るとき）", "I'm Ken."],
+  ["はじめまして。", "Nice to meet you."],
+  ["出身はどこですか？", "Where are you from?"],
+  ["日本出身です。", "I'm from Japan."],
+  ["何歳ですか？", "How old are you?"],
+  ["25歳です。", "I'm 25 years old.", "I'm 25.", "I'm twenty-five years old.", "I'm twenty-five."],
+  ["お仕事は何をしていますか？", "What do you do for a living?", "What do you do?"],
+  ["私は先生です。", "I'm a teacher."],
+  ["もう一度言ってもらえますか？", "Could you say that again?", "Can you say that again?"],
+  ["どういう意味？", "What do you mean?"],
+  ["（言っていることが）わかりません。", "I don't understand."],
+  ["（話が）ピンとこない。", "I don't get it."],
+  ["手伝ってもらえますか？", "Can you help me?", "Could you help me?"],
+  ["何かお手伝いしましょうか？", "Can I help you?", "May I help you?"],
+  ["これはいくらですか？", "How much is this?"],
+  ["トイレはどこですか？", "Where is the bathroom?", "Where's the bathroom?"],
+  ["お腹がすいた。", "I'm hungry."],
+  ["今何時ですか？", "What time is it?"],
+  ["今何時かわかりますか？（時計を持っていますか？）", "Do you have the time?"],
+  ["道に迷いました。", "I'm lost."],
+  ["すみません。（呼びかけ）", "Excuse me."],
+  ["ごめんなさい。", "I'm sorry.", "Sorry."],
+  ["ありがとう。", "Thank you.", "Thanks."],
+  ["どういたしまして。", "You're welcome."],
+  ["気にしないで。", "No worries."],
+  ["お会計をお願いします。", "Can I have the bill, please?", "Can I have the check, please?", "Can I have the bill?", "Can I get the check, please?"],
+  ["一番近い駅はどこですか？", "Where is the nearest station?", "Where's the nearest station?"],
+  ["駅へはどうやって行けばいいですか？", "How do I get to the station?"],
+  ["これを試着してもいいですか？", "Can I try this on?"],
+  ["これにします。（買います）", "I'll take it."],
+  ["これの違うサイズはありますか？", "Do you have this in a different size?"],
+  ["気に入りました。", "I like it."],
+  ["私には合わないかな。（好みじゃない）", "It's not for me."],
+  ["好きな食べ物は何ですか？", "What's your favorite food?"],
+  ["好きな食べ物はラーメンです。", "My favorite food is ramen."],
+  ["どこに住んでいますか？", "Where do you live?"],
+  ["東京に住んでいます。", "I live in Tokyo."],
+  ["今日の天気はどう？", "What's the weather like today?", "What's the weather today?", "How's the weather today?"],
+  ["今日はいい天気ですね。", "It's beautiful weather today.", "It's a beautiful day today.", "It's nice weather today."],
+  ["もう行かなきゃ。", "I gotta go.", "I've got to go.", "I have to go."],
+  ["またね。", "See you later.", "See you."],
+  ["何してるの？", "What are you doing?"],
+  ["仕事中です。", "I'm working."],
+  ["勉強中です。", "I'm studying."],
+  ["疲れた。", "I'm tired."],
+  ["もう寝るね。", "I'm going to bed.", "I'm going to sleep."],
+  ["おやすみなさい。", "Good night."],
+  ["おはよう。", "Good morning."],
+  ["何時に起きたの？", "What time did you get up?", "What time did you wake up?"],
+  ["7時に起きました。", "I got up at 7.", "I got up at seven.", "I woke up at 7.", "I woke up at seven."],
+  ["昨日の夜は何時に寝たの？", "What time did you go to bed last night?"],
+  ["昨日の夜は11時に寝ました。", "I went to bed at 11 last night.", "I went to bed at eleven last night."],
+  ["スポーツは好きですか？", "Do you like sports?"],
+  ["暇なときは何をするのが好きですか？", "What do you like to do in your free time?"],
+  ["バスケをするのが好きです。", "I like to play basketball.", "I like playing basketball."],
+  ["趣味は何ですか？", "What are your hobbies?", "What's your hobby?"],
+  ["私の趣味は読書です。", "My hobby is reading."],
+  ["ペットを飼っていますか？", "Do you have any pets?", "Do you have a pet?"],
+  ["犬を飼っています。", "I have a dog."],
+  ["好きな映画は何ですか？", "What's your favorite movie?"],
+  ["好きな映画はタイタニックです。", "My favorite movie is Titanic."],
+  ["ちょっと聞いてもいい？", "Can I ask you something?"],
+  ["喜んでお手伝いします。", "I'm happy to help.", "I'd be happy to help."],
+  ["どう思う？", "What do you think?"],
+  ["すごくいいと思う。", "I think it's great."],
+  ["そうは思わないな。", "I don't think so."],
+  ["カバンを探しています。", "I'm looking for a bag."],
+  ["見せてもらえますか？", "Can you show me?", "Could you show me?"],
+  ["週末の予定は？", "What are your plans for the weekend?", "What are your weekend plans?"],
+  ["京都に行く予定です。", "I'm going to Kyoto."],
+  ["今週末は忙しいです。", "I'm busy this weekend."],
+  ["明日空いてる？", "Are you free tomorrow?"],
+  ["駅で3時に会おう。", "Let's meet at the station at 3.", "Let's meet at the station at three."],
+  ["道を教えてもらえますか？", "Can you show me the way?", "Could you show me the way?"],
+  ["駅がどこにあるか知っていますか？", "Do you know where the station is?"],
+  ["空港まではどのくらいかかりますか？", "How long does it take to get to the airport?"],
+  ["30分くらいかかります。", "It takes about 30 minutes.", "It takes about thirty minutes."],
+  ["鍵を探すのを手伝ってくれる？", "Can you help me find my keys?", "Can you help me find the key?", "Can you help me find my key?"],
+  ["何時に始まりますか？", "What time does it start?"],
+  ["7時に始まります。", "It starts at 7.", "It starts at seven."],
+  ["LINEやってる？", "Do you have LINE?"],
+  ["LINE交換しよう。", "Let's exchange LINE.", "Let's exchange LINE IDs."],
+  ["インスタ教えてもらえる？", "Can I have your Instagram?"],
+  ["連絡を取り合おうね。", "Let's keep in touch.", "Let's stay in touch."],
+  ["どのくらいの頻度でジムに行くの？", "How often do you go to the gym?"],
+  ["ルパとは週に1回会います。", "I see Rupa once a week."],
+  ["今夜映画を観ない？", "Do you want to watch a movie tonight?", "Do you wanna watch a movie tonight?"],
+  ["うん、いいね。", "Sure, that sounds good.", "Sure, sounds good."],
+  ["ううん、大丈夫。（断るとき）", "No, I'm good.", "I'm good."],
+  ["よくわからない。（確信がない）", "I'm not sure."],
+  ["ちょっと考えさせて。", "Let me think about it."],
+  ["どうしたの？（何が起きてるの？）", "What's going on?"],
+  ["どっちでもいいよ。", "It doesn't matter."],
+  ["今向かってるよ。", "I'm on my way."],
+  ["着いたよ。", "I'm here."],
+];
+
+const CONTRACTIONS = {
+  "i'm": "i am", "you're": "you are", "it's": "it is", "what's": "what is", "where's": "where is",
+  "how's": "how is", "that's": "that is", "let's": "let us", "don't": "do not", "doesn't": "does not",
+  "i'll": "i will", "i'd": "i would", "i've": "i have", "can't": "cannot", "gotta": "got to",
+  "wanna": "want to", "isn't": "is not", "aren't": "are not",
+};
+
+function normalize(s) {
+  let t = s.toLowerCase().replace(/[’‘`]/g, "'").replace(/[.,!?。、！？"]/g, " ");
+  t = t.split(/\s+/).filter(Boolean).map(w => CONTRACTIONS[w] || w).join(" ");
+  return t.replace(/\bgot to\b/g, "have to");
+}
+
+const $ = id => document.getElementById(id);
+let questions = [], idx = 0, results = [], answered = false;
+
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function startQuiz(pool) {
+  questions = shuffle(pool).slice(0, 10);
+  idx = 0; results = [];
+  $("start").classList.add("hidden"); $("end").classList.add("hidden"); $("quiz").classList.remove("hidden");
+  show();
+}
+
+function show() {
+  const q = questions[idx];
+  answered = false;
+  $("qnum").textContent = `第 ${idx + 1} 問 / ${questions.length}`;
+  $("qscore").textContent = `正解 ${results.filter(r => r.ok).length}`;
+  $("barFill").style.width = `${(idx / questions.length) * 100}%`;
+  $("ja").textContent = q[0];
+  stopMic(); $("micMsg").textContent = "";
+  $("input").value = ""; $("input").disabled = false; $("micBtn").disabled = false;
+  $("checkBtn").disabled = false; $("skipBtn").disabled = false;
+  $("result").className = "result";
+  $("input").focus();
+}
+
+function check(skip) {
+  if (answered) return;
+  answered = true;
+  stopMic(); $("micBtn").disabled = true;
+  const q = questions[idx];
+  const user = $("input").value.trim();
+  const ok = !skip && user !== "" && q.slice(1).some(a => normalize(a) === normalize(user));
+  results.push({ q, user, ok });
+  $("input").disabled = true; $("checkBtn").disabled = true; $("skipBtn").disabled = true;
+  $("result").className = "result " + (ok ? "ok" : "ng");
+  $("resultHead").textContent = ok ? "正解！" : (skip || !user ? "答え" : "惜しい！");
+  $("answer").textContent = q[1];
+  $("alt").textContent = q.length > 2 ? "別の言い方: " + q.slice(2).join(" / ") : "";
+  $("overrideBtn").classList.toggle("hidden", ok || !user);
+  $("qscore").textContent = `正解 ${results.filter(r => r.ok).length}`;
+  speak(q[1]);
+  $("nextBtn").focus();
+}
+
+function next() {
+  idx++;
+  if (idx < questions.length) show(); else finish();
+}
+
+function finish() {
+  $("quiz").classList.add("hidden"); $("end").classList.remove("hidden");
+  const score = results.filter(r => r.ok).length;
+  $("finalScore").textContent = `${score} / ${results.length}`;
+  $("review").innerHTML = "";
+  for (const r of results) {
+    const li = document.createElement("li");
+    const mark = document.createElement("span");
+    mark.className = "mark " + (r.ok ? "ok" : "ng"); mark.textContent = r.ok ? "○" : "×";
+    li.append(mark, r.q[0], document.createElement("br"));
+    const ans = document.createElement("strong"); ans.textContent = r.q[1]; li.append(ans);
+    if (!r.ok && r.user) {
+      const u = document.createElement("div"); u.className = "alt"; u.textContent = "あなたの回答: " + r.user; li.append(u);
+    }
+    $("review").append(li);
+  }
+  $("retryWrongBtn").classList.toggle("hidden", score === results.length);
+}
+
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US"; u.rate = 0.95;
+  speechSynthesis.speak(u);
+}
+
+// 音声入力（Web Speech API）。使えない環境ではOSの音声入力を案内する
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const MIC_FALLBACK = "この環境ではマイクボタンが使えません。キーボードの音声入力（Windows: Win + H / Mac: Fn を2回 / スマホ: キーボードのマイク）で入力してください。";
+let rec = null, listening = false;
+
+function stopMic() {
+  if (rec && listening) rec.abort();
+  listening = false; $("micBtn").classList.remove("on");
+}
+
+function startMic() {
+  if (!SR) { $("micMsg").textContent = MIC_FALLBACK; return; }
+  rec = new SR();
+  rec.lang = "en-US"; rec.interimResults = true; rec.maxAlternatives = 3;
+  let finalText = "";
+  rec.onresult = e => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) {
+        // 候補の中に正解と一致するものがあればそれを採用する
+        const q = questions[idx];
+        const alts = Array.from(r).map(a => a.transcript.trim());
+        finalText = alts.find(t => q.slice(1).some(a => normalize(a) === normalize(t))) || alts[0];
+      } else interim += r[0].transcript;
+    }
+    $("input").value = finalText || interim;
+  };
+  rec.onerror = e => {
+    listening = false; $("micBtn").classList.remove("on");
+    if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture") $("micMsg").textContent = MIC_FALLBACK;
+    else if (e.error === "no-speech") $("micMsg").textContent = "声が聞き取れませんでした。もう一度🎤を押して話してください。";
+    else if (e.error !== "aborted") $("micMsg").textContent = "音声認識でエラーが起きました（" + e.error + "）。";
+  };
+  rec.onend = () => {
+    const wasListening = listening;
+    listening = false; $("micBtn").classList.remove("on");
+    if (wasListening && finalText && !answered) { $("micMsg").textContent = "聞き取り: " + finalText; check(false); }
+  };
+  try {
+    rec.start(); listening = true;
+    $("micBtn").classList.add("on"); $("micMsg").textContent = "聞いています… 英語で話してください";
+  } catch (err) { $("micMsg").textContent = MIC_FALLBACK; }
+}
+
+$("micBtn").onclick = () => { if (listening) stopMic(); else { window.speechSynthesis?.cancel(); startMic(); } };
+
+$("startBtn").onclick = () => startQuiz(PHRASES);
+$("againBtn").onclick = () => startQuiz(PHRASES);
+$("retryWrongBtn").onclick = () => startQuiz(results.filter(r => !r.ok).map(r => r.q));
+$("checkBtn").onclick = () => check(false);
+$("skipBtn").onclick = () => check(true);
+$("nextBtn").onclick = next;
+$("speakBtn").onclick = () => speak(questions[idx][1]);
+$("overrideBtn").onclick = () => {
+  results[results.length - 1].ok = true;
+  $("result").className = "result ok"; $("resultHead").textContent = "正解にしました";
+  $("overrideBtn").classList.add("hidden");
+  $("qscore").textContent = `正解 ${results.filter(r => r.ok).length}`;
+  $("nextBtn").focus();
+};
+$("input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); check(false); }
+});
+</script>
+</body>
+</html>
