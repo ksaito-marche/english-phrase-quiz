@@ -12,7 +12,7 @@
 index.html                 画面
 app.js                     クイズ・単元選択・マイ単元の処理
 data/youtube/100sen-1.js   YouTubeフレーズ 100選①
-data/shunkan/original-XX.js 瞬間英作文 単元1〜10（オリジナル例文）
+data/shunkan/shunkan-XX.js  瞬間英作文1〜13（オリジナル例文・文法ミックス）
 ```
 
 単元を増やすときは `data/` にファイルを追加し、`index.html` 末尾に `<script src="...">` を1行足します。

@@ -35,7 +35,7 @@
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
   /* 単元選択 */
-  .catHead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .catHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
   .units { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
   .unit { text-align: left; padding: 12px 14px; display: grid; gap: 2px; }
   .unit:hover { border-color: var(--accent); background: var(--accent-soft); }
@@ -136,6 +136,7 @@
       <div class="head" id="resultHead"></div>
       <div class="answer"><span id="answer"></span><button class="speak" id="speakBtn" title="発音を聞く" aria-label="発音を聞く">🔊</button></div>
       <div class="alt" id="alt"></div>
+      <div class="alt" id="point"></div>
       <div class="row" style="margin-top:12px">
         <button class="primary" id="nextBtn">次へ</button>
         <button id="overrideBtn">正解にする</button>
@@ -182,16 +183,19 @@
 <!-- 単元データ。単元を増やすときはファイルを追加してここに1行足す -->
 <script src="app.js"></script>
 <script src="data/youtube/100sen-1.js"></script>
-<script src="data/shunkan/original-01.js"></script>
-<script src="data/shunkan/original-02.js"></script>
-<script src="data/shunkan/original-03.js"></script>
-<script src="data/shunkan/original-04.js"></script>
-<script src="data/shunkan/original-05.js"></script>
-<script src="data/shunkan/original-06.js"></script>
-<script src="data/shunkan/original-07.js"></script>
-<script src="data/shunkan/original-08.js"></script>
-<script src="data/shunkan/original-09.js"></script>
-<script src="data/shunkan/original-10.js"></script>
+<script src="data/shunkan/shunkan-01.js"></script>
+<script src="data/shunkan/shunkan-02.js"></script>
+<script src="data/shunkan/shunkan-03.js"></script>
+<script src="data/shunkan/shunkan-04.js"></script>
+<script src="data/shunkan/shunkan-05.js"></script>
+<script src="data/shunkan/shunkan-06.js"></script>
+<script src="data/shunkan/shunkan-07.js"></script>
+<script src="data/shunkan/shunkan-08.js"></script>
+<script src="data/shunkan/shunkan-09.js"></script>
+<script src="data/shunkan/shunkan-10.js"></script>
+<script src="data/shunkan/shunkan-11.js"></script>
+<script src="data/shunkan/shunkan-12.js"></script>
+<script src="data/shunkan/shunkan-13.js"></script>
 <script>startApp();</script>
 </body>
 </html>

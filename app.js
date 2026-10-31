@@ -1,7 +1,14 @@
 // 単元データは data/ 以下のファイルが registerUnit() で登録する。
-// 単元: { category, id, name, note, items: [[日本語, 模範解答, ...別解], ...] }
+// 単元: { category, id, name, note, items }
+// items は [日本語, 模範解答, ...別解] か { p: 文法ポイント, ja: 日本語, en: [模範解答, ...別解] }
 const UNITS = [];
-function registerUnit(unit) { UNITS.push(unit); }
+function toItem(x) {
+  if (Array.isArray(x)) return x;
+  const item = [x.ja, ...x.en];
+  if (x.p) item.point = x.p;
+  return item;
+}
+function registerUnit(unit) { UNITS.push({ ...unit, items: unit.items.map(toItem) }); }
 
 const QUESTIONS_PER_ROUND = 10;
 const MY_CATEGORY = "マイ単元";
@@ -86,8 +93,8 @@ function renderHome() {
     const head = document.createElement("div"); head.className = "catHead";
     const h = document.createElement("h2"); h.textContent = cat; head.append(h);
     if (units.length > 1) {
-      const all = document.createElement("button"); all.className = "link"; all.textContent = "全単元からランダム";
-      all.onclick = () => startQuiz({ category: cat, name: "全単元", items: units.flatMap(u => u.items) });
+      const all = document.createElement("button"); all.className = "primary"; all.textContent = "ランダム10問（全範囲）";
+      all.onclick = () => startQuiz({ category: cat, name: "ランダム（全範囲）", items: units.flatMap(u => u.items) });
       head.append(all);
     }
     const grid = document.createElement("div"); grid.className = "units";
@@ -160,6 +167,7 @@ function check(skip) {
   $("resultHead").textContent = ok ? "正解！" : (skip || !user ? "答え" : "惜しい！");
   $("answer").textContent = q[1];
   $("alt").textContent = q.length > 2 ? "別の言い方: " + q.slice(2).join(" / ") : "";
+  $("point").textContent = q.point ? "ポイント: " + q.point : "";
   $("overrideBtn").classList.toggle("hidden", ok || !user);
   $("qscore").textContent = `正解 ${results.filter(r => r.ok).length}`;
   speak(q[1]);
